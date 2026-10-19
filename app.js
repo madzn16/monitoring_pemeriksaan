@@ -8,9 +8,9 @@
  *    violation_level. Lihat README untuk arti kolom dan contoh.
  */
 const CONFIG = {
-  GOOGLE_SHEETS_CSV_URL: "",
+  GOOGLE_SHEETS_CSV_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vT_Nu_FU65ecI-s5oystpl8dxDepwbLJ_o8MAIBa2jOXFZ2o5lY5OJxFuIXg_ZOiQ/pub?output=csv",
   USE_SAMPLE_DATA_ON_ERROR: true,
-  REFRESH_INTERVAL_MINUTES: 0
+  REFRESH_INTERVAL_MINUTES: 5
 };
 
 const SAMPLE_DATA = [
