@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Dashboard statistik pemeriksaan berbasis data publik.">
+  <title>Dashboard Monitoring Pemeriksaan</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">MP</div>
+        <div><strong>MONITORING</strong><span>PEMERIKSAAN</span></div>
+      </div>
+      <div class="sidebar-label">WORKSPACE</div>
+      <a class="nav-item active" href="#overview"><span>◫</span> Ringkasan</a>
+      <a class="nav-item" href="#analytics"><span>▥</span> Analisis Data</a>
+      <a class="nav-item" href="#register"><span>☷</span> Daftar Pemeriksaan</a>
+      <div class="sidebar-bottom">
+        <div class="status-dot"></div>
+        <div><strong>Data dashboard</strong><span id="connectionStatus">Memuat data...</span></div>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div>
+          <div class="eyebrow">EXECUTIVE DATA OVERVIEW</div>
+          <h1>Dashboard Monitoring Pemeriksaan</h1>
+          <p class="subtitle">Ringkasan statistik, progres, dan ketepatan waktu pemeriksaan.</p>
+        </div>
+        <div class="topbar-right">
+          <div class="live-chip"><span></span> Dashboard Publik</div>
+          <button id="refreshBtn" class="btn-refresh" type="button">↻ <span>Muat ulang</span></button>
+        </div>
+      </header>
+
+      <section class="filter-panel" aria-label="Filter dashboard">
+        <div class="filter-title"><span class="filter-icon">⌁</span><div><strong>Filter Dashboard</strong><small>Sesuaikan data yang ditampilkan</small></div></div>
+        <label>Tahun
+          <select id="yearFilter"><option value="all">Semua tahun</option></select>
+        </label>
+        <label>Inspektorat Penanganan
+          <select id="inspectorateFilter"><option value="all">Semua inspektorat</option></select>
+        </label>
+        <label>Unit Kerja yang Diperiksa
+          <select id="unitFilter"><option value="all">Semua unit kerja</option></select>
+        </label>
+        <button id="resetBtn" class="btn-reset" type="button">Reset filter</button>
+      </section>
+
+      <section id="overview" class="kpi-grid">
+        <article class="kpi-card kpi-blue">
+          <div class="kpi-top"><span>Total Pemeriksaan</span><span class="kpi-icon">▤</span></div>
+          <div id="kpiTotal" class="kpi-value">—</div>
+          <div class="kpi-foot"><span class="kpi-bullet"></span> Seluruh data sesuai filter</div>
+        </article>
+        <article class="kpi-card kpi-purple">
+          <div class="kpi-top"><span>Dalam Proses</span><span class="kpi-icon">◷</span></div>
+          <div id="kpiProgress" class="kpi-value">—</div>
+          <div class="kpi-foot"><span class="kpi-bullet"></span> Belum berstatus selesai/ditutup</div>
+        </article>
+        <article class="kpi-card kpi-green">
+          <div class="kpi-top"><span>Selesai</span><span class="kpi-icon">✓</span></div>
+          <div id="kpiCompleted" class="kpi-value">—</div>
+          <div class="kpi-foot"><span class="kpi-bullet"></span> Pemeriksaan selesai atau ditutup</div>
+        </article>
+        <article class="kpi-card kpi-orange">
+          <div class="kpi-top"><span>Lewat Target</span><span class="kpi-icon">⚑</span></div>
+          <div id="kpiOverdue" class="kpi-value">—</div>
+          <div class="kpi-foot"><span class="kpi-bullet"></span> Belum selesai dan melewati target</div>
+        </article>
+      </section>
+
+      <section id="analytics" class="chart-grid">
+        <article class="panel chart-panel chart-wide">
+          <div class="panel-heading"><div><h2>Tren Pemeriksaan</h2><p>Jumlah pemeriksaan berdasarkan bulan mulai</p></div><span class="panel-tag">TREN</span></div>
+          <div id="trendChart" class="chart-area"></div>
+        </article>
+        <article class="panel chart-panel">
+          <div class="panel-heading"><div><h2>Komposisi Status</h2><p>Status terkini pemeriksaan</p></div></div>
+          <div id="statusChart" class="chart-area chart-donut"></div>
+        </article>
+        <article class="panel chart-panel chart-wide">
+          <div class="panel-heading"><div><h2>Pemeriksaan per Unit</h2><p>Perbandingan jumlah pemeriksaan per unit kerja yang diperiksa</p></div></div>
+          <div id="unitChart" class="chart-area"></div>
+        </article>
+        <article class="panel insight-panel">
+          <div class="panel-heading"><div><h2>Ikhtisar Data</h2><p>Indikator dari data yang sedang ditampilkan</p></div><span class="insight-icon">✦</span></div>
+          <div class="insight-row"><span>Tingkat penyelesaian</span><strong id="completionRate">—</strong></div>
+          <div class="progress-track"><div id="completionBar" class="progress-fill"></div></div>
+          <div class="insight-row"><span>Rata-rata durasi selesai</span><strong id="averageDuration">—</strong></div>
+          <div class="insight-row"><span>Inspektorat terbanyak</span><strong id="topInspectorate">—</strong></div>
+          <div class="insight-note">Ikhtisar dihitung otomatis dari baris yang sesuai dengan filter.</div>
+        </article>
+      </section>
+
+      <section id="register" class="panel register-panel">
+        <div class="panel-heading register-heading">
+          <div><h2>Daftar Pemeriksaan</h2><p>Daftar data yang dapat ditampilkan untuk publik</p></div>
+          <div class="table-tools"><input id="searchInput" type="search" placeholder="Cari nomor, judul, unit..." aria-label="Cari pemeriksaan"><span id="rowCount" class="row-count">0 data</span></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>No.</th><th>Nomor / Judul</th><th>Inspektorat</th><th>Unit Diperiksa</th><th>Tanggal Mulai</th><th>Target Selesai</th><th>Status</th></tr></thead>
+            <tbody id="tableBody"><tr><td colspan="7" class="empty-state">Memuat data...</td></tr></tbody>
+          </table>
+        </div>
+        <div class="table-footer"><span id="tableMessage">Data contoh ditampilkan jika sumber Google Sheets belum dikonfigurasi.</span><button id="showAllBtn" class="text-button" type="button">Tampilkan semua hasil →</button></div>
+      </section>
+
+      <footer class="footer"><span>Dashboard Statistik Pemeriksaan</span><span>Data ditampilkan sesuai sumber dan hak publikasi yang ditetapkan.</span></footer>
+    </main>
+  </div>
+</body>
+</html>
