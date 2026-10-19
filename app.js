@@ -3,22 +3,27 @@
  *
  * 1) Publikasikan TAB khusus yang sudah disetujui untuk konsumsi publik sebagai CSV.
  * 2) Tempel URL CSV pada GOOGLE_SHEETS_CSV_URL di bawah ini.
- * 3) Disesuaikan dengan monitoring_pemeriksaan_disiplin.xlsx: kolom id, title,
- *    instansi_pemeriksa, inspectorate, unit, start_date, target_date, end_date,
- *    status, year, personnel_name, personnel_id, examination_type, stage,
- *    violation_level, notes.
+ * 3) Kolom minimum: id, title, inspectorate, unit, start_date, target_date,
+ *    end_date, status, year, personnel_name, examination_type, stage,
+ *    violation_level. Lihat README untuk arti kolom dan contoh.
  */
 const CONFIG = {
-  GOOGLE_SHEETS_CSV_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vT_Nu_FU65ecI-s5oystpl8dxDepwbLJ_o8MAIBa2jOXFZ2o5lY5OJxFuIXg_ZOiQ/pub?output=csv",
-  USE_SAMPLE_DATA_ON_ERROR: false,
+  // Dashboard mengambil CSV lokal dari GitHub Pages agar tidak terkena CORS Google Sheets.
+  // GitHub Actions memperbarui data.csv secara berkala dari Google Sheets.
+  DATA_CSV_URL: "./data.csv",
+  USE_SAMPLE_DATA_ON_ERROR: true,
   REFRESH_INTERVAL_MINUTES: 5
 };
 
 const SAMPLE_DATA = [
- {id:"PM-2026-0001",title:"Pemeriksaan dugaan pelanggaran disiplin pegawai",instansi_pemeriksa:"Inspektorat Utama",inspectorate:"Inspektorat-01",unit:"Biro-01",start_date:"2026-01-12",status:"SELESAI",personnel_name:"Personel Contoh A",examination_type:"Pelanggaran Disiplin",stage:"Pemeriksaan selesai",violation_level:"RINGAN",year:"2026"},
- {id:"PM-2026-0002",title:"Pemeriksaan dugaan pelanggaran disiplin pegawai",instansi_pemeriksa:"Inspektorat Utama",inspectorate:"Inspektorat-02",unit:"Deputi-I",start_date:"2026-02-03",status:"DALAM_PEMERIKSAAN",personnel_name:"Personel Contoh B",examination_type:"Pelanggaran Disiplin",stage:"Pengumpulan keterangan dan bukti",violation_level:"SEDANG",year:"2026"},
- {id:"PM-2026-0003",title:"Mediasi penyelesaian izin perceraian",instansi_pemeriksa:"Inspektorat Utama",inspectorate:"Inspektorat-03",unit:"Biro-02",start_date:"2026-02-20",status:"DALAM_VERIFIKASI",personnel_name:"Personel Contoh C",examination_type:"Perceraian",stage:"Verifikasi awal",violation_level:"-",year:"2026"},
- {id:"PM-2025-0004",title:"Verifikasi berkas pengunduran diri",instansi_pemeriksa:"Inspektorat Utama",inspectorate:"Inspektorat-01",unit:"Deputi-II",start_date:"2025-04-07",status:"REKOMENDASI",personnel_name:"Personel Contoh D",examination_type:"Pengunduran Diri",stage:"Penyusunan/monitoring rekomendasi",violation_level:"-",year:"2025"}
+ {id:"SIM-2026-001",title:"SIM-2026-001",inspectorate:"Inspektorat I",unit:"Biro Umum",start_date:"2026-01-12",status:"SELESAI",personnel_name:"Personel Contoh A",examination_type:"Pelanggaran Disiplin",stage:"Rekomendasi",violation_level:"Ringan",year:"2026"},
+ {id:"SIM-2026-002",title:"SIM-2026-002",inspectorate:"Inspektorat II",unit:"Biro Keuangan",start_date:"2026-02-03",status:"DALAM PEMERIKSAAN",personnel_name:"Personel Contoh B",examination_type:"Pelanggaran Disiplin",stage:"Pemeriksaan",violation_level:"Sedang",year:"2026"},
+ {id:"SIM-2026-003",title:"SIM-2026-003",inspectorate:"Inspektorat III",unit:"Biro Logistik",start_date:"2026-02-20",status:"DALAM VERIFIKASI",personnel_name:"Personel Contoh C",examination_type:"Pelanggaran Lainnya",stage:"Verifikasi",violation_level:"Berat",year:"2026"},
+ {id:"SIM-2025-004",title:"SIM-2025-004",inspectorate:"Inspektorat I",unit:"Biro Umum",start_date:"2025-04-07",status:"SELESAI",personnel_name:"Personel Contoh D",examination_type:"Pelanggaran Disiplin",stage:"Selesai",violation_level:"Ringan",year:"2025"},
+ {id:"SIM-2025-005",title:"SIM-2025-005",inspectorate:"Inspektorat II",unit:"Biro Keuangan",start_date:"2025-06-15",status:"DALAM PEMERIKSAAN",personnel_name:"Personel Contoh E",examination_type:"Pelanggaran Disiplin",stage:"Analisis",violation_level:"Sedang",year:"2025"},
+ {id:"SIM-2024-006",title:"SIM-2024-006",inspectorate:"Inspektorat III",unit:"Biro Logistik",start_date:"2024-08-21",status:"SELESAI",personnel_name:"Personel Contoh F",examination_type:"Pelanggaran Lainnya",stage:"Selesai",violation_level:"Berat",year:"2024"},
+ {id:"SIM-2026-007",title:"SIM-2026-007",inspectorate:"Inspektorat I",unit:"Biro SDM",start_date:"2026-03-18",status:"DALAM VERIFIKASI",personnel_name:"Personel Contoh G",examination_type:"Pelanggaran Disiplin",stage:"Verifikasi",violation_level:"Ringan",year:"2026"},
+ {id:"SIM-2026-008",title:"SIM-2026-008",inspectorate:"Inspektorat II",unit:"Biro SDM",start_date:"2026-05-09",status:"SELESAI",personnel_name:"Personel Contoh H",examination_type:"Pelanggaran Disiplin",stage:"Selesai",violation_level:"Sedang",year:"2026"}
 ];
 
 let allRows = [];
@@ -61,21 +66,17 @@ function normalizeRow(raw,index){
   const level=pick(o,["violation_level","tingkat_pelanggaran","kategori_pelanggaran","tingkat","severity"],"");
   let year=pick(o,["year","tahun","tahun_pemeriksaan"],"");
   if(!year && start){const d=new Date(start);if(!isNaN(d))year=String(d.getFullYear());}
-  const examinationType=pick(o,["examination_type","jenis_pemeriksaan","jenis"],"Tidak ditentukan");
-  // Tingkat pelanggaran hanya dihitung untuk jenis Pelanggaran Disiplin.
-  const normalizedLevel=/^(ringan|sedang|berat)$/i.test(level.trim()) && /pelanggaran\s+disiplin/i.test(examinationType) ? level.trim().toUpperCase() : "";
   return {
     id, title:pick(o,["title","judul","nomor_pemeriksaan","nomor"],id),
-    instansi_pemeriksa:pick(o,["instansi_pemeriksa","instansi_pemeriksa"],"Inspektorat Utama"),
     inspectorate:pick(o,["inspectorate","inspektorat","inspektorat_penanganan"],"Belum diisi"),
     unit:pick(o,["unit","unit_kerja","unit_yang_diperiksa","nama_unit"],"Belum diisi"),
     start_date:start,target_date:pick(o,["target_date","tanggal_target","planned_end_date"]),
     end_date:end,status,year,
     personnel_name:pick(o,["personnel_name","nama_personel","personel_yang_diperiksa","personel","nama"],"Tidak dicantumkan"),
     personnel_id:pick(o,["personnel_id","nrp","nip","personel_id"],""),
-    examination_type:examinationType,
+    examination_type:pick(o,["examination_type","jenis_pemeriksaan","jenis"],"Tidak ditentukan"),
     stage:pick(o,["stage","tahap","tahap_pemeriksaan","current_stage"],"Tidak ditentukan"),
-    violation_level:normalizedLevel,
+    violation_level:level,
     notes:pick(o,["notes","keterangan","catatan"],"")
   };
 }
@@ -117,10 +118,9 @@ function applyFilters(){
 }
 function renderDashboard(){
   const rows=filteredRows;
-  const disciplinaryRows=rows.filter(r=>/pelanggaran\s+disiplin/i.test(r.examination_type));
-  const light=disciplinaryRows.filter(r=>levelKind(r,"ringan")||levelKind(r,"light")).length;
-  const medium=disciplinaryRows.filter(r=>levelKind(r,"sedang")||levelKind(r,"medium")).length;
-  const heavy=disciplinaryRows.filter(r=>levelKind(r,"berat")||levelKind(r,"heavy")||levelKind(r,"severe")).length;
+  const light=rows.filter(r=>levelKind(r,"ringan")||levelKind(r,"light")).length;
+  const medium=rows.filter(r=>levelKind(r,"sedang")||levelKind(r,"medium")).length;
+  const heavy=rows.filter(r=>levelKind(r,"berat")||levelKind(r,"heavy")||levelKind(r,"severe")).length;
   $("kpiTotal").textContent=fmtNum(rows.length);
   $("kpiVerification").textContent=fmtNum(rows.filter(isVerification).length);
   $("kpiInProgress").textContent=fmtNum(rows.filter(isInProgress).length);
@@ -177,30 +177,31 @@ function renderTable(){
 }
 async function loadData(){
   $("connectionStatus").textContent="MEMUAT DATA";
-  if(CONFIG.GOOGLE_SHEETS_CSV_URL.trim()){
-    try{
-      const url=CONFIG.GOOGLE_SHEETS_CSV_URL.trim();
-      const response=await fetch(url,{cache:"no-store"});
-      if(!response.ok)throw new Error(`HTTP ${response.status}`);
-      const csv=await response.text();
-      const raw=parseCSV(csv);
-      if(!raw.length)throw new Error("CSV kosong atau header tidak terbaca");
-      allRows=raw.map(normalizeRow);
-      $("connectionStatus").textContent="GOOGLE SHEETS TERHUBUNG";
-      $("dataMessage").textContent=`Data berhasil dimuat dari Google Sheets: ${fmtNum(allRows.length)} baris.`;
-    }catch(error){
-      console.error(error);
-      if(!CONFIG.USE_SAMPLE_DATA_ON_ERROR){allRows=[];$("connectionStatus").textContent="GAGAL MEMUAT DATA";$("dataMessage").textContent="Data tidak dapat dimuat. Periksa URL CSV, akses publikasi, dan pastikan tab Data_Pemeriksaan dipublikasikan sebagai CSV.";}
-      else{allRows=SAMPLE_DATA.map(normalizeRow);$("connectionStatus").textContent="MODE CONTOH";$("dataMessage").textContent="Google Sheets gagal dimuat; dashboard menggunakan data contoh. Periksa URL CSV dan pastikan tab telah dipublikasikan sebagai CSV.";}
+  try{
+    const response=await fetch(`${CONFIG.DATA_CSV_URL}?t=${Date.now()}`,{cache:"no-store"});
+    if(!response.ok)throw new Error(`HTTP ${response.status}`);
+    const csv=await response.text();
+    const raw=parseCSV(csv);
+    if(!raw.length)throw new Error("CSV kosong atau header tidak terbaca");
+    allRows=raw.map(normalizeRow);
+    $("connectionStatus").textContent="DATA TERBARU TERSEDIA";
+    $("dataMessage").textContent=`Data berhasil dimuat: ${fmtNum(allRows.length)} baris. Data disinkronkan dari Google Sheets melalui GitHub Actions.`;
+  }catch(error){
+    console.error("Gagal memuat data.csv:",error);
+    if(!CONFIG.USE_SAMPLE_DATA_ON_ERROR){
+      allRows=[];
+      $("connectionStatus").textContent="GAGAL MEMUAT DATA";
+      $("dataMessage").textContent="Data tidak dapat dimuat. Periksa apakah data.csv tersedia di repository GitHub Pages.";
+    }else{
+      allRows=SAMPLE_DATA.map(normalizeRow);
+      $("connectionStatus").textContent="MODE CONTOH";
+      $("dataMessage").textContent="File data.csv belum dapat dimuat; dashboard menggunakan data contoh. Pastikan file data.csv tersedia di repository.";
     }
-  }else{
-    allRows=SAMPLE_DATA.map(normalizeRow);
-    $("connectionStatus").textContent="MODE CONTOH";
-    $("dataMessage").textContent="URL CSV Google Sheets belum diatur. Publikasikan tab Data_Pemeriksaan sebagai CSV, lalu tempel URL-nya di konfigurasi app.js.";
   }
   setupFilters();filteredRows=[...allRows];renderDashboard();
-  $("lastUpdated").textContent=`Pembaruan: ${new Date().toLocaleString("id-ID")}`;
+  $("lastUpdated").textContent=`Pembaruan halaman: ${new Date().toLocaleString("id-ID")}`;
 }
+
 document.addEventListener("DOMContentLoaded",()=>{
   $("applyFilters").addEventListener("click",applyFilters);
   ["yearFilter","inspectorateFilter","unitFilter","statusFilter"].forEach(id=>$(id).addEventListener("change",applyFilters));
