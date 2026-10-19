@@ -17,11 +17,11 @@ const CONFIG = {
 
 const SAMPLE_DATA = [
  {id:"SIM-2026-001",title:"SIM-2026-001",inspectorate:"Inspektorat I",unit:"Biro Umum",start_date:"2026-01-12",status:"SELESAI",personnel_name:"Personel Contoh A",examination_type:"Pelanggaran Disiplin",stage:"Rekomendasi",violation_level:"Ringan",year:"2026"},
- {id:"SIM-2026-002",title:"SIM-2026-002",inspectorate:"Inspektorat II",unit:"Biro Keuangan",start_date:"2026-02-03",status:"DALAM PEMERIKSAAN",personnel_name:"Personel Contoh B",examination_type:"Pelanggaran Disiplin",stage:"Pemeriksaan",violation_level:"Sedang",year:"2026"},
- {id:"SIM-2026-003",title:"SIM-2026-003",inspectorate:"Inspektorat III",unit:"Biro Logistik",start_date:"2026-02-20",status:"DALAM VERIFIKASI",personnel_name:"Personel Contoh C",examination_type:"Pelanggaran Lainnya",stage:"Verifikasi",violation_level:"Berat",year:"2026"},
+ {id:"SIM-2026-002",title:"SIM-2026-002",inspectorate:"Inspektorat II",unit:"Biro Keuangan",start_date:"2026-02-03",status:"DALAM PEMERIKSAAN",personnel_name:"Personel Contoh B",examination_type:"Perceraian",stage:"Pemeriksaan",violation_level:"Sedang",year:"2026"},
+ {id:"SIM-2026-003",title:"SIM-2026-003",inspectorate:"Inspektorat III",unit:"Biro Logistik",start_date:"2026-02-20",status:"DALAM VERIFIKASI",personnel_name:"Personel Contoh C",examination_type:"Perceraian",stage:"Verifikasi",violation_level:"Berat",year:"2026"},
  {id:"SIM-2025-004",title:"SIM-2025-004",inspectorate:"Inspektorat I",unit:"Biro Umum",start_date:"2025-04-07",status:"SELESAI",personnel_name:"Personel Contoh D",examination_type:"Pelanggaran Disiplin",stage:"Selesai",violation_level:"Ringan",year:"2025"},
- {id:"SIM-2025-005",title:"SIM-2025-005",inspectorate:"Inspektorat II",unit:"Biro Keuangan",start_date:"2025-06-15",status:"DALAM PEMERIKSAAN",personnel_name:"Personel Contoh E",examination_type:"Pelanggaran Disiplin",stage:"Analisis",violation_level:"Sedang",year:"2025"},
- {id:"SIM-2024-006",title:"SIM-2024-006",inspectorate:"Inspektorat III",unit:"Biro Logistik",start_date:"2024-08-21",status:"SELESAI",personnel_name:"Personel Contoh F",examination_type:"Pelanggaran Lainnya",stage:"Selesai",violation_level:"Berat",year:"2024"},
+ {id:"SIM-2025-005",title:"SIM-2025-005",inspectorate:"Inspektorat II",unit:"Biro Keuangan",start_date:"2025-06-15",status:"DALAM PEMERIKSAAN",personnel_name:"Personel Contoh E",examination_type:"Pengunduran Diri",stage:"Analisis",violation_level:"Sedang",year:"2025"},
+ {id:"SIM-2024-006",title:"SIM-2024-006",inspectorate:"Inspektorat III",unit:"Biro Logistik",start_date:"2024-08-21",status:"SELESAI",personnel_name:"Personel Contoh F",examination_type:"Pengunduran Diri",stage:"Selesai",violation_level:"Berat",year:"2024"},
  {id:"SIM-2026-007",title:"SIM-2026-007",inspectorate:"Inspektorat I",unit:"Biro SDM",start_date:"2026-03-18",status:"DALAM VERIFIKASI",personnel_name:"Personel Contoh G",examination_type:"Pelanggaran Disiplin",stage:"Verifikasi",violation_level:"Ringan",year:"2026"},
  {id:"SIM-2026-008",title:"SIM-2026-008",inspectorate:"Inspektorat II",unit:"Biro SDM",start_date:"2026-05-09",status:"SELESAI",personnel_name:"Personel Contoh H",examination_type:"Pelanggaran Disiplin",stage:"Selesai",violation_level:"Sedang",year:"2026"}
 ];
@@ -31,6 +31,7 @@ let filteredRows = [];
 let currentPage = 1;
 let trendChartInstance = null;
 let riskChartInstance = null;
+let typeComparisonChartInstance = null;
 const $ = id => document.getElementById(id);
 const MONTHS = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
 
@@ -135,7 +136,7 @@ function renderDashboard(){
   const year=$("yearFilter").value;
   $("periodLabel").textContent=year?`Tahun ${year}`:"Semua periode";
   $("footerPeriod").textContent=year?`Dashboard Monitoring · ${year}`:"Dashboard Monitoring · Semua periode";
-  renderTrend(rows); renderRisk([light,medium,heavy]); renderTable();
+  renderTrend(rows); renderRisk([light,medium,heavy]); renderTypeComparison(rows); renderTable();
 }
 function renderTrend(rows){
   const counts=new Map();
@@ -149,7 +150,7 @@ function renderTrend(rows){
   $("trendChart").classList.toggle("hidden",keys.length===0);
   $("trendEmpty").classList.toggle("hidden",keys.length>0);
   if(!keys.length)return;
-  trendChartInstance=new ApexCharts($("trendChart"),{chart:{type:"area",height:300,toolbar:{show:false},zoom:{enabled:false},background:"transparent",foreColor:"#9bb1c9",fontFamily:"inherit"},series:[{name:"Pemeriksaan",data}],xaxis:{categories:labels,labels:{style:{colors:"#9bb1c9"},rotate:-25},axisBorder:{color:"rgba(105,190,255,.12)"},axisTicks:{color:"rgba(105,190,255,.12)"}},yaxis:{min:0,forceNiceScale:true,labels:{style:{colors:"#9bb1c9"},formatter:v=>Math.round(v)}},colors:["#22d3ee"],stroke:{curve:"smooth",width:3},fill:{type:"gradient",gradient:{shadeIntensity:1,opacityFrom:.36,opacityTo:.025,stops:[0,90,100]}},markers:{size:4,strokeWidth:0},dataLabels:{enabled:false},grid:{borderColor:"rgba(105,190,255,.12)",strokeDashArray:4},tooltip:{theme:"dark",y:{formatter:v=>`${v} pemeriksaan`}},legend:{show:false}});trendChartInstance.render();
+  trendChartInstance=new ApexCharts($("trendChart"),{chart:{type:"area",height:300,toolbar:{show:false},zoom:{enabled:false},background:"transparent",foreColor:"#9bb1c9",fontFamily:"inherit"},series:[{name:"Pemeriksaan",data}],xaxis:{categories:labels,labels:{style:{colors:"#9bb1c9"},rotate:-25},axisBorder:{color:"rgba(105,190,255,.12)"},axisTicks:{color:"rgba(105,190,255,.12)"}},yaxis:{min:0,forceNiceScale:true,labels:{style:{colors:"#c9dced",fontSize:"14px"},formatter:v=>Math.round(v)}},colors:["#22d3ee"],stroke:{curve:"smooth",width:3},fill:{type:"gradient",gradient:{shadeIntensity:1,opacityFrom:.36,opacityTo:.025,stops:[0,90,100]}},markers:{size:4,strokeWidth:0},dataLabels:{enabled:false},grid:{borderColor:"rgba(105,190,255,.12)",strokeDashArray:4},tooltip:{theme:"dark",y:{formatter:v=>`${v} pemeriksaan`}},legend:{show:false}});trendChartInstance.render();
 }
 function renderRisk(values){
   if(riskChartInstance){riskChartInstance.destroy();riskChartInstance=null;}
@@ -157,8 +158,52 @@ function renderRisk(values){
   $("riskChart").classList.toggle("hidden",total===0);
   $("riskEmpty").classList.toggle("hidden",total>0);
   if(!total)return;
-  riskChartInstance=new ApexCharts($("riskChart"),{chart:{type:"donut",height:280,background:"transparent",foreColor:"#9bb1c9",fontFamily:"inherit"},series:values,labels:["Ringan","Sedang","Berat"],colors:["#34d399","#fbbf24","#f87171"],stroke:{show:true,colors:["#0d1d33"],width:3},dataLabels:{enabled:false},legend:{position:"bottom",labels:{colors:"#9bb1c9"},fontSize:"12px"},plotOptions:{pie:{donut:{size:"70%",labels:{show:true,name:{show:true,color:"#9bb1c9",offsetY:18},value:{show:true,color:"#fff",fontSize:"25px",fontWeight:800,offsetY:-12,formatter:v=>Math.round(v)},total:{show:true,showAlways:true,label:"Total",color:"#9bb1c9",formatter:w=>w.globals.seriesTotals.reduce((a,b)=>a+b,0)}}}}},tooltip:{theme:"dark",y:{formatter:v=>`${v} kasus`}}});riskChartInstance.render();
+  riskChartInstance=new ApexCharts($("riskChart"),{chart:{type:"donut",height:280,background:"transparent",foreColor:"#9bb1c9",fontFamily:"inherit"},series:values,labels:["Ringan","Sedang","Berat"],colors:["#34d399","#fbbf24","#f87171"],stroke:{show:true,colors:["#0d1d33"],width:3},dataLabels:{enabled:false},legend:{position:"bottom",labels:{colors:"#dcecff"},fontSize:"15px"},plotOptions:{pie:{donut:{size:"70%",labels:{show:true,name:{show:true,color:"#9bb1c9",offsetY:18},value:{show:true,color:"#fff",fontSize:"25px",fontWeight:800,offsetY:-12,formatter:v=>Math.round(v)},total:{show:true,showAlways:true,label:"Total",color:"#9bb1c9",formatter:w=>w.globals.seriesTotals.reduce((a,b)=>a+b,0)}}}}},tooltip:{theme:"dark",y:{formatter:v=>`${v} kasus`}}});riskChartInstance.render();
 }
+function canonicalExaminationType(value){
+  const v=String(value||"").trim().toLocaleLowerCase("id-ID").replace(/\s+/g," ");
+  if(v.includes("disiplin")) return "Pelanggaran Disiplin";
+  if(v.includes("perceraian")) return "Perceraian";
+  if(v.includes("pengunduran diri") || v.includes("mengundurkan diri")) return "Pengunduran Diri";
+  return null;
+}
+function renderTypeComparison(rows){
+  const types=["Pelanggaran Disiplin","Perceraian","Pengunduran Diri"];
+  const unitFilter=$("unitFilter").value;
+  const grouped=new Map();
+  rows.forEach(r=>{
+    const type=canonicalExaminationType(r.examination_type);
+    if(!type) return;
+    const unit=r.unit||"Belum diisi";
+    if(!grouped.has(unit)) grouped.set(unit,{"Pelanggaran Disiplin":0,"Perceraian":0,"Pengunduran Diri":0});
+    grouped.get(unit)[type]++;
+  });
+  let units=[...grouped.keys()].sort((a,b)=>a.localeCompare(b,"id"));
+  // Saat unit tertentu dipilih, tampilkan unit tersebut saja; selain itu bandingkan semua unit.
+  if(unitFilter) units=units.filter(u=>u===unitFilter);
+  const series=types.map(type=>({name:type,data:units.map(unit=>grouped.get(unit)?.[type]||0)}));
+  const total=series.reduce((sum,serie)=>sum+serie.data.reduce((a,b)=>a+b,0),0);
+  $("typeComparisonLabel").textContent=unitFilter?`Unit: ${unitFilter}`:"Semua unit kerja";
+  if(typeComparisonChartInstance){typeComparisonChartInstance.destroy();typeComparisonChartInstance=null;}
+  $("typeComparisonChart").classList.toggle("hidden",total===0);
+  $("typeComparisonEmpty").classList.toggle("hidden",total>0);
+  if(total===0) return;
+  typeComparisonChartInstance=new ApexCharts($("typeComparisonChart"),{
+    chart:{type:"bar",height:Math.max(360,units.length*62+110),toolbar:{show:true},background:"transparent",foreColor:"#c9dced",fontFamily:"inherit"},
+    series,
+    colors:["#22d3ee","#a78bfa","#fb7185"],
+    plotOptions:{bar:{horizontal:true,borderRadius:5,barHeight:"58%",dataLabels:{position:"top"}}},
+    dataLabels:{enabled:true,style:{colors:["#ffffff"],fontSize:"14px",fontWeight:700},formatter:v=>v===0?"":v,offsetX:5},
+    xaxis:{categories:units,min:0,forceNiceScale:true,labels:{style:{colors:"#c9dced",fontSize:"14px"},formatter:v=>Math.round(v)},axisBorder:{color:"rgba(105,190,255,.12)"},axisTicks:{color:"rgba(105,190,255,.12)"}},
+    yaxis:{labels:{style:{colors:"#eaf4ff",fontSize:"14px",fontWeight:600},maxWidth:260}},
+    grid:{borderColor:"rgba(105,190,255,.12)",strokeDashArray:4},
+    legend:{position:"bottom",labels:{colors:"#dcecff"},fontSize:"15px"},
+    tooltip:{theme:"dark",shared:true,intersect:false,y:{formatter:v=>`${v} pemeriksaan`}},
+    noData:{text:"Data tidak tersedia",style:{color:"#9bb1c9"}}
+  });
+  typeComparisonChartInstance.render();
+}
+
 function renderTable(){
   const q=$("searchInput").value.trim().toLowerCase();
   const rows=filteredRows.filter(r=>[r.id,r.title,r.personnel_name,r.unit,r.inspectorate,r.examination_type,r.stage,r.status].join(" ").toLowerCase().includes(q));
