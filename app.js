@@ -45,7 +45,7 @@ function parseCSV(text){
   for(let i=0;i<text.length;i++){
     const c=text[i], next=text[i+1];
     if(c === '"'){ if(quoted && next === '"'){cell+='"';i++;} else quoted=!quoted; }
-    else if(c === "," && !quoted){row.push(cell);cell="";}
+    else if(c === ";" && !quoted){row.push(cell);cell="";}
     else if((c === "\n" || c === "\r") && !quoted){
       if(c==="\r" && next==="\n")i++;
       row.push(cell); if(row.some(v=>String(v).trim()!==""))rows.push(row);
